@@ -221,6 +221,27 @@ A bundle can also be installed directly from an `https` URL, so a preview or int
 azd extension install https://example.com/builds/my-ext_1.0.0.zip
 ```
 
+### First-party PR bundles
+
+When a pull request runs a first-party extension pipeline, the pipeline publishes an unsigned bundle for that extension and posts a concise install command on the pull request. Each extension pipeline owns its bundle and comment independently.
+
+The public URL is stable for the life of the pull request and points to the latest successfully published build:
+
+```text
+https://azuresdkartifacts.z5.web.core.windows.net/azd/extensions/pr/<pr-number>/<sanitized-id>/<sanitized-id>.zip
+```
+
+The sanitized ID replaces dots in the extension ID with hyphens, for example `azure.ai.agents` becomes `azure-ai-agents`.
+
+PR versions include both the pull request number and Azure Pipelines build ID:
+
+- Stable base: `1.2.3-pr.<pr-number>.<build-id>`
+- Prerelease base: `1.2.3-preview.pr.<pr-number>.<build-id>`
+
+Appending the PR suffix to an existing prerelease means the PR version sorts above the unsuffixed prerelease under semver precedence. Bundle-installed extensions do not automatically upgrade, so testers explicitly install another bundle or switch back to a registry source.
+
+These bundles are unsigned development artifacts, not official releases. Install them only when you trust the pull request. The artifacts are temporary and may be removed. Authorized fork pull requests follow the same internal pipeline behaviour; forks that are not authorized to run the internal pipeline do not publish bundles.
+
 The install flow treats the bundle as an **installer, not a registry** — nothing about the bundle persists as a configured source once installation finishes:
 
 1. **Download** (URLs only) the bundle to a temporary file. Download failures — an unreachable host or a non-`200` response — are reported as such, separately from a `.zip` that turns out not to be a valid bundle. From here on, remote and local bundles follow the exact same path.
